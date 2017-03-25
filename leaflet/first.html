@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="leaflet/leaflet.css"/>
+    <script src="leaflet/leaflet-src.js"></script>
+    <title>Title</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<div id="map"></div>
+</body>
+<script>
+    //坐标数组
+    var latlngs = [];
+    //线
+    var line;
+    //生成地图，关闭地图双击放大事件
+    var map = L.map('map', {doubleClickZoom: false}).setView([39.92, 116.46], 13);
+    //右上角添加比例尺
+    L.control.scale({position: 'topright'}).addTo(map);
+    //生成layer添加入地图
+    L.tileLayer('http://map.zhtu.net:8080/r3t-basemap/{z}/{x}/{y}/tile.jpg', {
+        maxZoom: 18
+    }).addTo(map);
+    //绑定双击事件
+    map.on('dblclick', onMapDbClick);
+
+    //地图双击事件，添加marker并画线
+    function onMapDbClick(e) {
+        //添加marker和popup
+        var marker = L.marker(e.latlng, {
+            riseOnHover: true
+        }).addTo(map)
+            .bindPopup(e.latlng.toString())
+            .openPopup();
+        marker.on('dblclick', onMarkerClick);
+        //坐标加入数组
+        latlngs.push(e.latlng);
+        drawLine();
+    }
+    //删除线，根据坐标数组重新画线
+    function drawLine() {
+        if (line) line.remove();
+        line = L.polyline(latlngs).addTo(map);
+        line.bindPopup(makeLinePopupContent());
+    }
+
+    //生成线popup字符串
+    function makeLinePopupContent() {
+        var content = "";
+        for (var i = 0; i < latlngs.length; i++) {
+            content += "Point" + i + ":" + latlngs[i].toString() + "<br />";
+        }
+        return content;
+    }
+
+    //marker点击删除事件
+    function onMarkerClick(e) {
+        latlngs.splice(latlngs.indexOf(e.latlng), 1);
+        e.target.remove();
+        drawLine();
+    }
+
+</script>
+</html>
